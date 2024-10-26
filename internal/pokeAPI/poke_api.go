@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
+
+	"github.com/joshlaudone/pokedex-repl/internal/pokecache"
 )
 
 type LocationArea struct {
@@ -20,13 +23,16 @@ type LocationArea struct {
 type Config struct {
 	NextLocationArea *string
 	PrevLocationArea *string
+	Cache            *pokecache.PokeCache
 }
 
 func InitConfig() *Config {
 	nextLoc := "https://pokeapi.co/api/v2/location-area/"
+	cache := pokecache.New(1 * time.Minute)
 	return &Config{
 		NextLocationArea: &nextLoc,
 		PrevLocationArea: nil,
+		Cache:            cache,
 	}
 }
 
@@ -49,19 +55,26 @@ func GetPrevLocations(cfg *Config) error {
 }
 
 func getLocationArea(cfg *Config, url *string) error {
-	resp, err := http.Get(*url)
-	if err != nil {
-		return err
-	}
-	defer resp.Body.Close()
+	data, found := cfg.Cache.Get(*url)
+	if !found {
+		resp, err := http.Get(*url)
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
+		body, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return err
+		}
+
+		cfg.Cache.Add(*url, body)
+
+		data = body
 	}
 
 	var locations LocationArea
-	if err := json.Unmarshal(body, &locations); err != nil {
+	if err := json.Unmarshal(data, &locations); err != nil {
 		return err
 	}
 
