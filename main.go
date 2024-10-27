@@ -42,6 +42,11 @@ func constructCliCommandMap() map[string]cliCommand {
 			description: "Display the pokemon at a location",
 			callback:    pokeapi.GetPokemonAtLocation,
 		},
+		"catch": {
+			name:        "catch",
+			description: "Attempt to catch the specified pokemon",
+			callback:    pokeapi.TryToCatchPokemon,
+		},
 	}
 }
 

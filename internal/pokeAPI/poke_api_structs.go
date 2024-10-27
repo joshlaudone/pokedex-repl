@@ -6,6 +6,7 @@ type Config struct {
 	NextLocationArea *string
 	PrevLocationArea *string
 	Cache            *pokecache.PokeCache
+	Pokedex          map[string]PokemonData
 }
 
 type LocationArea struct {
@@ -71,7 +72,7 @@ type ExploredArea struct {
 	} `json:"pokemon_encounters"`
 }
 
-type Pokemon struct {
+type PokemonData struct {
 	Abilities []struct {
 		Ability struct {
 			Name string `json:"name"`

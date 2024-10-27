@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"time"
 
@@ -11,6 +12,8 @@ import (
 )
 
 const locationAreaUrl = "https://pokeapi.co/api/v2/location-area/"
+const pokeDataUrl = "https://pokeapi.co/api/v2/pokemon/"
+const maxBaseXP = 350.0
 
 func InitConfig() *Config {
 	nextLoc := locationAreaUrl
@@ -19,6 +22,7 @@ func InitConfig() *Config {
 		NextLocationArea: &nextLoc,
 		PrevLocationArea: nil,
 		Cache:            cache,
+		Pokedex:          make(map[string]PokemonData),
 	}
 }
 
@@ -84,6 +88,43 @@ func GetPokemonAtLocation(cfg *Config, params []string) error {
 	for _, encounter := range area.PokemonEncounters {
 		fmt.Printf(" - %s\n", encounter.Pokemon.Name)
 	}
+
+	return nil
+}
+
+func TryToCatchPokemon(cfg *Config, params []string) error {
+	if len(params) < 1 {
+		return fmt.Errorf("must pass in the name of the pokemon to catch")
+	}
+
+	pokemonToCatch := params[0]
+	url := pokeDataUrl + pokemonToCatch
+
+	data, err := cachedGet(cfg, url)
+	if err != nil {
+		return err
+	}
+
+	var pokeData PokemonData
+	if err := json.Unmarshal(data, &pokeData); err != nil {
+		return err
+	}
+
+	baseXP := float64(pokeData.BaseExperience)
+	catch_chance := 1 - baseXP/maxBaseXP
+	if catch_chance <= 0.0 {
+		catch_chance = 0.01
+	}
+
+	fmt.Printf("Throwing a Pokeball at %s... \n", pokemonToCatch)
+
+	if rand.Float64() > catch_chance {
+		fmt.Printf("%s escaped!\n", pokemonToCatch)
+		return nil
+	}
+
+	fmt.Printf("%s was caught!\n", pokemonToCatch)
+	cfg.Pokedex[pokemonToCatch] = pokeData
 
 	return nil
 }
