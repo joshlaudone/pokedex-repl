@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"os"
+	"strings"
 
 	pokeapi "github.com/joshlaudone/pokedex-repl/internal/pokeAPI"
 )
@@ -11,7 +12,7 @@ import (
 type cliCommand struct {
 	name        string
 	description string
-	callback    func(*pokeapi.Config) error
+	callback    func(*pokeapi.Config, []string) error
 }
 
 func constructCliCommandMap() map[string]cliCommand {
@@ -36,23 +37,31 @@ func constructCliCommandMap() map[string]cliCommand {
 			description: "Display the previous 20 locations",
 			callback:    pokeapi.GetPrevLocations,
 		},
+		"explore": {
+			name:        "explore",
+			description: "Display the pokemon at a location",
+			callback:    pokeapi.GetPokemonAtLocation,
+		},
 	}
 }
 
-func commandHelp(cfg *pokeapi.Config) error {
+const helpSpaces = 10
+
+func commandHelp(cfg *pokeapi.Config, params []string) error {
 	fmt.Println("Welcome to the Pokedex!")
 	fmt.Println("Usage:")
 
 	cliCommandMap := constructCliCommandMap()
 	for _, command := range cliCommandMap {
-		fmt.Printf("\t%s: %s\n", command.name, command.description)
+		spaces := strings.Repeat(" ", helpSpaces-len(command.name))
+		fmt.Printf("\t%s:%s%s\n", command.name, spaces, command.description)
 	}
 
 	fmt.Println()
 	return nil
 }
 
-func commandExit(cfg *pokeapi.Config) error {
+func commandExit(cfg *pokeapi.Config, params []string) error {
 	fmt.Println("closed the pokedex")
 	os.Exit(0)
 	return nil
@@ -69,13 +78,20 @@ func main() {
 		fmt.Print("Pokedex -> ")
 		scanner.Scan()
 
-		command, ok := cliCommandMap[scanner.Text()]
+		words := strings.Fields(scanner.Text())
+
+		// Call help if the user enters an empty command
+		if len(words) == 0 {
+			words = append(words, "help")
+		}
+
+		command, ok := cliCommandMap[words[0]]
 		if !ok {
 			fmt.Printf("Invalid command: %s\n", scanner.Text())
 			continue
 		}
 
-		err := command.callback(cfg)
+		err := command.callback(cfg, words[1:])
 		if err != nil {
 			fmt.Println(err)
 		}
