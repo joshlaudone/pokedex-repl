@@ -44,8 +44,18 @@ func constructCliCommandMap() map[string]cliCommand {
 		},
 		"catch": {
 			name:        "catch",
-			description: "Attempt to catch the specified pokemon",
+			description: "Attempt to catch the specified Pokemon",
 			callback:    pokeapi.TryToCatchPokemon,
+		},
+		"inspect": {
+			name:        "inspect",
+			description: "View info about the specified Pokemon",
+			callback:    pokeapi.InspectPokemon,
+		},
+		"pokedex": {
+			name:        "pokedex",
+			description: "View all captured pokemon",
+			callback:    commandPokedex,
 		},
 	}
 }
@@ -69,6 +79,15 @@ func commandHelp(cfg *pokeapi.Config, params []string) error {
 func commandExit(cfg *pokeapi.Config, params []string) error {
 	fmt.Println("closed the pokedex")
 	os.Exit(0)
+	return nil
+}
+
+func commandPokedex(cfg *pokeapi.Config, params []string) error {
+	fmt.Println("Your Pokedex:")
+	for pokemonName := range cfg.Pokedex {
+		fmt.Printf("  - %s\n", pokemonName)
+	}
+
 	return nil
 }
 

@@ -129,6 +129,34 @@ func TryToCatchPokemon(cfg *Config, params []string) error {
 	return nil
 }
 
+func InspectPokemon(cfg *Config, params []string) error {
+	if len(params) < 1 {
+		return fmt.Errorf("pass in the name of the pokemon to inspect")
+	}
+
+	inspectingPokemon := params[0]
+	pokeData, found := cfg.Pokedex[inspectingPokemon]
+	if !found {
+		return fmt.Errorf("you have not caught that pokemon")
+	}
+
+	fmt.Printf("Name: %s\n", pokeData.Name)
+	fmt.Printf("Height: %d\n", pokeData.Height)
+	fmt.Printf("Weight: %d\n", pokeData.Weight)
+
+	fmt.Println("Stats:")
+	for _, stat := range pokeData.Stats {
+		fmt.Printf("  - %s: %d\n", stat.Stat.Name, stat.BaseStat)
+	}
+
+	fmt.Println("Types:")
+	for _, pokeType := range pokeData.Types {
+		fmt.Printf("  - %s\n", pokeType.Type.Name)
+	}
+
+	return nil
+}
+
 func cachedGet(cfg *Config, url string) ([]byte, error) {
 	data, found := cfg.Cache.Get(url)
 	if !found {
